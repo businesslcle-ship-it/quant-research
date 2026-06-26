@@ -10,7 +10,7 @@ Estrategia sistematica de momentum cross-sectional com volatility targeting, apl
 | **Com CDI no caixa (vs CDI)** | **0,75** | **1,10** | **-25%** | **+5.660%** |
 | Buy & Hold (1/3 cada) | 0,83 | 1,15 | -52% | +3.017% |
 
-Nota honesta: no Brasil o risco-livre (CDI) e alto, entao o Sharpe medido CONTRA o CDI (0,75) e o numero honesto; o 1,09 e contra zero. O retorno total inclui o CDI do caixa.
+Nota honesta: no Brasil o risco-livre (CDI) e alto, entao o Sharpe e medido CONTRA o CDI (0,75 = habilidade real). O caixa rende CDI (sobe o retorno total), mas no Sharpe vs CDI esse ganho se neutraliza, sobrando so o quanto a parte investida bate o CDI. O 1,09 e a versao sem CDI, vs zero.
 
 ![Resultado](rotacao.png)
 
