@@ -25,13 +25,18 @@ As alocacoes da Rotacao v2 (pesos fracionarios + caixa) e do Dual Momentum (tudo
 
 ![Sinais comparados](sinais_comparados.png)
 
-## Dual Momentum vs benchmark
+## Dual Momentum nos 60 minutos — dois relogios
 
-O baseline do livro contra o Buy & Hold 1/3 e o CDI, na mesma grade mensal do `dual_momentum.py` — `python3 dual_momentum_graf.py` gera:
+O `dual_momentum.py` aplica o nucleo do livro DIRETO nas barras de 60min, com duas melhorias de engenharia medidas em laboratorio: **histerese de 5%** na troca de lider (a fronteira de custo tem plato em 5-12%, nao pico) e **dois relogios** — a perna relativa decide a cada barra, a perna absoluta so pode mudar de estado na 1a barra do dia (o liga-desliga horario do caixa era ~80% do custo: 625 trocas contra 100).
+
+| Versao | Sharpe | MaxDD (regua) | Retorno | Custo/ano |
+|---|---|---|---|---|
+| **DM 60min dois relogios** | **1,11** | **-49% (horaria)** | +3.620% | 7,7% |
+| Baseline fiel mensal (`dual_momentum_mensal.py`) | 1,04 | -65% (mensal; -79% diaria) | +3.853% | ~0 |
 
 ![DM vs benchmark](dm_vs_benchmark.png)
 
-**Leitura honesta:** o DM ganha em retorno (+3.853% vs +966%) por concentracao composta (100% no lider), mas o B&H 1/3 tem Sharpe maior (1,13 vs 1,04) e drawdown menor (-41% vs -65%) — diversificar 3 acoes ja paga mais eficiencia que rotacionar entre elas. E exatamente a lacuna que o vol target da v2 fecha.
+**Leitura honesta:** a versao 60min usa o timestamp real (cada troca acontece num preco que existiu na tela), segura o drawdown na regua mais dura de todas e paga 7,7%/ano de custo por essa reatividade. Descontada a selecao de variantes testadas no laboratorio (~0,12 de barreira), o Sharpe liquido EMPATA com o baseline mensal — a escolha pela versao 60min se sustenta na regua de risco e no realismo de execucao, nao num Sharpe "maior". O baseline permanece no repo como ancora de comparacao. Contra o B&H 1/3 (Sharpe 1,13): o DM compra retorno por concentracao; eficiencia e papel do vol target da v2.
 
 ## Como rodar
 
@@ -39,7 +44,8 @@ O baseline do livro contra o Buy & Hold 1/3 e o CDI, na mesma grade mensal do `d
 pip install -r requirements.txt
 python3 rotacao.py          # metricas da v2
 python3 rotacao_graf.py     # v2 + grafico (3 paineis)
-python3 dual_momentum.py    # baseline do livro (Antonacci)
+python3 dual_momentum.py            # DM nos 60min (dois relogios) — o apresentado
+python3 dual_momentum_mensal.py     # baseline fiel ao livro (mensal)
 python3 comparativo.py      # compara as 4 estrategias + grafico
 python3 sinais.py           # exporta a alocacao diaria por ativo
 ```
@@ -51,8 +57,9 @@ Requer a pasta `dados/` com CSVs no formato `date,open,high,low,close,adjustedCl
 |---|---|
 | `rotacao.py` | Estrategia v2 (nucleo legivel, comentado) |
 | `rotacao_graf.py` | v2 + grafico de 3 paineis |
-| `dual_momentum.py` | Dual Momentum fiel ao livro (baseline de comparacao) |
-| `dual_momentum_graf.py` | DM vs B&H 1/3 vs CDI (grafico, grade mensal) |
+| `dual_momentum.py` | Dual Momentum nos 60min — dois relogios (o apresentado) |
+| `dual_momentum_mensal.py` | Baseline fiel ao livro, mensal (ancora de comparacao) |
+| `dual_momentum_graf.py` | DM 60min vs baseline mensal vs B&H 1/3 vs CDI (grafico) |
 | `comparativo.py` | Comparativo das 4 estrategias + grafico |
 | `sinais.py` | Exporta a alocacao diaria por ativo |
 | `Pseudocodigo_v2.docx` | Pseudocodigo da v2 (linha a linha) |
