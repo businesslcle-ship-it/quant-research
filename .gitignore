@@ -7,3 +7,4 @@ venv/
 data_stocks.txt
 *_backup_*/
 diario_do_60min.csv
+out/

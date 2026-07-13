@@ -18,57 +18,72 @@ A logica tem tres camadas independentes: **direcao** (em quem — a media dos li
 | Dual Momentum (livro, baseline) | 1,03 | 50% | -79% | +4.727% |
 | Buy & Hold 1/3 | 1,17 | 27% | -52% | +1.539% |
 
-![Comparativo](comparativo.png)
+![Comparativo](figures/comparativo.png)
 
-**Leitura:** o vol target ("o freio") e o que separa a v2 do resto. Sem ele, a rotacao converge para o Dual Momentum classico (mesma vol de 50%, mesmo drawdown de -79%) — ou seja, o diferencial da v2 nao esta no sinal de direcao, e sim no **controle de risco**: terceiro do risco, metade do drawdown, e o melhor retorno ajustado a risco (Sharpe) do grupo. O Dual Momentum entrega mais retorno absoluto (concentra 100% no lider), mas ao custo de um drawdown de -79%. **Nao confundir** o 1,56 (janela 2016+) com o 1,18 (amostra 2008+ apos E37).
+**Leitura:** o vol target ("o freio") e o que separa a v2 do resto. Sem ele, a rotacao converge para o Dual Momentum classico (mesma vol de 50%, mesmo drawdown de -79%) — ou seja, o diferencial da v2 nao esta no sinal de direcao, e sim no **controle de risco**. **Nao confundir** o 1,56 (janela 2016+) com o 1,18 (amostra 2008+ apos E37).
 
-![Rotacao v2](rotacao.png)
+![Rotacao v2](figures/rotacao.png)
 
 ## Sinais das duas estrategias
 
-As alocacoes da Rotacao v2 (pesos fracionarios + caixa) e do Dual Momentum baseline mensal (tudo-ou-nada) no mesmo eixo do tempo — `python3 sinais_comparados.py` gera o grafico e exporta os CSVs de sinais:
+As alocacoes da Rotacao v2 (pesos fracionarios + caixa) e do Dual Momentum baseline mensal (tudo-ou-nada) no mesmo eixo do tempo — `python3 src/sinais_comparados.py` gera o grafico e exporta CSVs em `out/`:
 
-![Sinais comparados](sinais_comparados.png)
+![Sinais comparados](figures/sinais_comparados.png)
 
 ## Dual Momentum fiel ao livro, nas barras de 60 minutos
 
-O `dual_momentum.py` roda o nucleo do livro INTACTO — momentum de **12 meses por calendario** (nunca contagem de barras) e barreira do CDI acumulado dos mesmos 12 meses — avaliado a cada barra de 60min, com UMA concessao: **histerese de 5%** na troca de lider. A defesa da concessao e conceitual: o rebalanceamento mensal do livro ja e uma histerese de TEMPO; quem avalia por barra precisa traduzir o amortecedor em PRECO (sem ele o lider pisca nos cruzamentos: 455 trocas, custo de 22%/ano — medido).
+O `dual_momentum.py` roda o nucleo do livro INTACTO — momentum de **12 meses por calendario** (nunca contagem de barras) e barreira do CDI acumulado dos mesmos 12 meses — avaliado a cada barra de 60min, com UMA concessao: **histerese de 5%** na troca de lider.
 
 | Versao | Sharpe | MaxDD (regua) | Retorno | Custo/ano | Trocas de lider |
 |---|---|---|---|---|---|
 | **DM 60min fiel (12m + histerese)** | **1,12** | -64% (horaria) | **+4.631%** | **3,6%** | **20 em 9 anos** |
 | Baseline fiel mensal (`dual_momentum_mensal.py`) | 1,04 | -65% (mensal; -79% diaria) | +3.853% | baixo (18 trocas × 20 bps) | 18 em 9 anos |
 
-![DM vs benchmark](dm_vs_benchmark.png)
+![DM vs benchmark](figures/dm_vs_benchmark.png)
 
-**Leitura honesta:** descontada a selecao de variantes do laboratorio (~0,12 de barreira), o Sharpe EMPATA com o baseline — a escolha pela versao 60min se sustenta em fidelidade + uso integral do timestamp real + custo mecanicamente baixo (3,6%/ano), nao num Sharpe "maior". O retorno de +4.631% e fragil: a maior barra sozinha (+18,4% em nov/2020, em posicao concentrada) vale ~735 pontos percentuais do acumulado — concentracao em barras volateis, nao eficiencia. O drawdown e o do proprio livro (-64% horaria ~ -65% mensal do baseline): velocidade de reacao vem do HORIZONTE do sinal, nao do relogio de avaliacao — encurtar o lookback baixaria o DD, mas deixaria de ser o livro. Contra o B&H 1/3 (Sharpe 1,13): o DM compra retorno por concentracao; eficiencia e papel do vol target da v2.
+**Leitura honesta:** descontada a selecao de variantes do laboratorio (~0,12 de barreira), o Sharpe EMPATA com o baseline — a escolha pela versao 60min se sustenta em fidelidade + uso integral do timestamp real + custo mecanicamente baixo, nao num Sharpe "maior".
 
 ## Como rodar
 
 ```bash
 pip install -r requirements.txt
-python3 rotacao.py          # metricas da v2
-python3 rotacao_graf.py     # v2 + grafico (3 paineis)
-python3 dual_momentum.py            # DM fiel (12m calendario) nas barras de 60min — o apresentado
-python3 dual_momentum_mensal.py     # baseline fiel ao livro (mensal)
-python3 comparativo.py      # compara as 4 estrategias + grafico
-python3 sinais.py           # exporta a alocacao diaria por ativo
+python3 rotacao.py                 # v2 (atalho → src/)
+python3 dual_momentum.py           # DM 60min apresentado
+python3 dual_momentum_mensal.py    # baseline mensal
+python3 comparativo.py             # 4 estrategias + figura
+python3 rotacao_graf.py            # v2 + grafico 3 paineis
+# ou direto:
+python3 src/rotacao.py
+python3 src/sinais_comparados.py
 ```
-Requer a pasta `dados/` com CSVs no formato `date,open,high,low,close,adjustedClose,volume`.
+
+Requer a pasta `dados/` (CSVs dos 3 ativos + `base_plana.csv` para o Dual Momentum).
 
 ## Estrutura
 
-| Arquivo | Conteudo |
+```
+├── README.md
+├── requirements.txt
+├── rotacao.py / dual_momentum.py …   # atalhos na raiz (chamam src/)
+├── src/                              # codigo canônico
+│   ├── rotacao.py                    # v2
+│   ├── dual_momentum.py              # DM 60min (apresentado)
+│   ├── dual_momentum_mensal.py       # baseline mensal
+│   ├── comparativo.py / *_graf.py / sinais*.py
+│   └── _paths.py                     # dados/, figures/, out/
+├── figures/                          # PNGs do README
+├── docs/                             # pseudocodigos (.docx)
+├── dados/                            # precos
+└── out/                              # CSVs gerados (gitignored)
+```
+
+| Pasta / arquivo | Conteudo |
 |---|---|
-| `rotacao.py` | Estrategia v2 (nucleo legivel, comentado) |
-| `rotacao_graf.py` | v2 + grafico de 3 paineis |
-| `dual_momentum.py` | Dual Momentum fiel (12m calendario) nas barras de 60min (o apresentado) |
-| `dual_momentum_mensal.py` | Baseline fiel ao livro, mensal (ancora de comparacao) |
-| `dual_momentum_graf.py` | DM 60min vs baseline mensal vs B&H 1/3 vs CDI (grafico) |
-| `comparativo.py` | Comparativo das 4 estrategias + grafico |
-| `sinais.py` | Exporta a alocacao diaria por ativo |
-| `Pseudocodigo_v2.docx` | Pseudocodigo da v2 (linha a linha) |
-| `Pseudocodigo_DualMomentum.docx` | Pseudocodigo do Dual Momentum (linha a linha) |
-| `dados/` | Precos ajustados dos 3 ativos |
+| `src/rotacao.py` | Estrategia v2 |
+| `src/dual_momentum.py` | Dual Momentum 60min (apresentado) |
+| `src/dual_momentum_mensal.py` | Baseline mensal |
+| `figures/` | Graficos do README |
+| `docs/` | Pseudocodigos linha a linha |
+| `dados/` | Precos ajustados |
 
 Stack: Python, pandas, numpy, matplotlib.

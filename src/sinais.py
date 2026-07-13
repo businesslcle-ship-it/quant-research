@@ -1,16 +1,22 @@
 """
-Exporta o sinal da v2 (alocacao por ativo) para sinais_{ATIVO}.csv.
+Exporta o sinal da v2 (alocacao por ativo) para out/sinais_{ATIVO}.csv.
 Mesma logica do rotacao.py: direcao (media de 4 janelas) -> vol target no
 portfolio -> pesos congelados por semana.
 """
 import pandas as pd
 import numpy as np
+import sys
+from pathlib import Path
+_SRC = Path(__file__).resolve().parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+from _paths import DADOS, OUT
 
 VOL_ALVO, JANELA_VOL, N = 0.20, 20, 252
 LOOKBACKS = [126, 189, 252, 315]
 ATIVOS = ["PRIO3", "ITUB3", "ABEV3"]
 
-px  = pd.concat({a: pd.read_csv(f"dados/{a}.csv", parse_dates=["date"]).set_index("date")["adjustedClose"]
+px  = pd.concat({a: pd.read_csv(DADOS / f"{a}.csv", parse_dates=["date"]).set_index("date")["adjustedClose"]
                  for a in ATIVOS}, axis=1, sort=True).loc["2008":]
 ret = px.pct_change()
 
@@ -27,5 +33,6 @@ mom12   = px.pct_change(252)
 
 for a in ATIVOS:
     out = pd.DataFrame({"adjustedClose": px[a], "momentum_12m": mom12[a], "peso": peso[a]}).dropna(subset=["peso"])
-    out.to_csv(f"sinais_{a}.csv")
-    print(f"sinais_{a}.csv  ({len(out)} linhas)  | peso hoje: {peso[a].iloc[-1]:.0%}")
+    path = OUT / f"sinais_{a}.csv"
+    out.to_csv(path)
+    print(f"{path}  ({len(out)} linhas)  | peso hoje: {peso[a].iloc[-1]:.0%}")

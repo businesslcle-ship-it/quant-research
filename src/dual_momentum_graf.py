@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 Grafico da apresentacao: Dual Momentum 60min FIEL (12m por calendario + histerese)
-vs baseline mensal, Buy & Hold 1/3 e CDI. Mesmos numeros do dual_momentum_60min.py
-(curva horaria, amostrada no fim do dia so para desenhar) e do dual_momentum_mensal.py.
-Gera dual_momentum/dm_vs_benchmark.png. Rodar da raiz Quantitative.
+vs baseline mensal, Buy & Hold 1/3 e CDI.
+Gera figures/dm_vs_benchmark.png.
 """
 import pandas as pd
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import sys
+from pathlib import Path
+_SRC = Path(__file__).resolve().parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+from _paths import DADOS, FIGS
 
 CUSTO, BUFFER, HORAS_POR_ANO = 0.0020, 0.05, 252 * 7
 ATIVOS = ['PRIO3', 'ITUB3', 'ABEV3']
@@ -17,7 +22,7 @@ CDI_POR_ANO = {2016: 0.1400, 2017: 0.0993, 2018: 0.0642, 2019: 0.0596, 2020: 0.0
                2021: 0.0442, 2022: 0.1239, 2023: 0.1304, 2024: 0.1088, 2025: 0.1350,
                2026: 0.1500}
 
-base = pd.read_csv('dados/base_plana.csv', parse_dates=['data'])
+base = pd.read_csv(DADOS / 'base_plana.csv', parse_dates=['data'])
 
 # %% 1) DM 60min fiel — identico ao dual_momentum_60min.py
 df = base[base['hora'] != 'dia'].copy()
@@ -108,5 +113,5 @@ embaixo.set_ylabel('Drawdown')
 embaixo.grid(alpha=0.3)
 
 fig.tight_layout()
-fig.savefig('dual_momentum/dm_vs_benchmark.png', dpi=150)
-print(f'dm_vs_benchmark.png salvo | DM60 fiel: {sh_dm60:.2f}/{dd_dm60:.0%} | baseline: {sh_gem:.2f}/{dd_gem:.0%} | B&H: {sh_bh:.2f}/{dd_bh:.0%}')
+fig.savefig(FIGS / 'dm_vs_benchmark.png', dpi=150)
+print(f'{FIGS / "dm_vs_benchmark.png"} salvo | DM60 fiel: {sh_dm60:.2f}/{dd_dm60:.0%} | baseline: {sh_gem:.2f}/{dd_gem:.0%} | B&H: {sh_bh:.2f}/{dd_bh:.0%}')

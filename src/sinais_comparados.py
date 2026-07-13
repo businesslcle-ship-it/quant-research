@@ -11,6 +11,12 @@ Momentum aposta tudo ou sai. Self-contained (roda so com dados/).
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
+from pathlib import Path
+_SRC = Path(__file__).resolve().parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+from _paths import DADOS, FIGS, OUT
 
 VOL_ALVO, JANELA_VOL, N = 0.20, 20, 252
 LOOKBACKS = [126, 189, 252, 315]
@@ -21,7 +27,7 @@ CDI_POR_ANO = {2008:0.1238, 2009:0.0988, 2010:0.0975, 2011:0.1160, 2012:0.0841,
                2018:0.0642, 2019:0.0596, 2020:0.0276, 2021:0.0442, 2022:0.1239,
                2023:0.1304, 2024:0.1088, 2025:0.1350, 2026:0.1500}
 
-precos = pd.concat({a: pd.read_csv(f"dados/{a}.csv", parse_dates=["date"]).set_index("date")["adjustedClose"]
+precos = pd.concat({a: pd.read_csv(DADOS / f"{a}.csv", parse_dates=["date"]).set_index("date")["adjustedClose"]
                     for a in ATIVOS}, axis=1, sort=True).loc["2008":]
 ret    = precos.pct_change()
 INICIO = (precos.dropna().index[0] + pd.Timedelta(days=370)).strftime("%Y-%m")
@@ -51,8 +57,8 @@ sinal_dm = peso_dm_m.copy()
 sinal_dm["caixa"] = 1 - sinal_dm.sum(axis=1)
 sinal_dm["lider"] = led.where(inv, "CAIXA")
 sinal_dm = sinal_dm.loc[INICIO:]
-sinal_dm.to_csv("sinais_dm.csv")
-print(f"sinais_dm.csv  ({len(sinal_dm)} meses)  | alocacao de hoje: {sinal_dm['lider'].iloc[-1]}")
+sinal_dm.to_csv(OUT / "sinais_dm.csv")
+print(f"{OUT / 'sinais_dm.csv'}  ({len(sinal_dm)} meses)  | alocacao de hoje: {sinal_dm['lider'].iloc[-1]}")
 print(f"sinais_*.csv (v2) sao separados: v2 = pesos diarios fracionarios; DM = alocacao mensal binaria")
 
 # ---------- visualizacao: as duas alocacoes lado a lado ----------
@@ -68,5 +74,5 @@ for ax, peso, titulo in [(ax1, peso_v2, "Rotacao v2 — pesos fracionarios (o va
     ax.set_title(titulo, fontsize=10); ax.set_ylim(0, 1); ax.margins(x=0)
 ax1.legend(loc="upper left", ncol=4, fontsize=8, framealpha=0.9)
 fig.tight_layout(rect=[0, 0, 1, 0.96])
-fig.savefig("sinais_comparados.png", dpi=130, facecolor="#fcfcfb")
-print("Grafico salvo: sinais_comparados.png")
+fig.savefig(FIGS / "sinais_comparados.png", dpi=130, facecolor="#fcfcfb")
+print(f"Grafico salvo: {FIGS / 'sinais_comparados.png'}")
