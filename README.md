@@ -6,16 +6,16 @@ A logica tem tres camadas independentes: **direcao** (em quem — a media dos li
 
 ## Resultados — duas janelas, mesma regua (diaria, 20 bps)
 
-**Lab / `rotacao.py` (amostra desde 2008, warm-up honesto — E37):** Sharpe **1,18** | MaxDD **−28%** | retorno +6.701%.  
-(Antes do E37 o código cortava a história em 2008 e reportava 1,30/−25% com 2008 inteiro em CDI por artefato. PRIO só entra em meados de 2015; ITUB em 2009.)
+**Lab / `rotacao.py` (amostra desde 2008, warm-up honesto — E37):** Sharpe **1,18** | MaxDD **−28%** | retorno +6.740%.  
+(Antes do E37 o código cortava a história em 2008 e reportava 1,30/−25% com 2008 inteiro em CDI por artefato. PRIO só entra em meados de 2015; ITUB em 2009. CDI do caixa: série diária BCB.)
 
 **Comparativo head-to-head (janela dos 3 ativos, ~2016-06+, `comparativo.py`):**
 
 | Estrategia | Sharpe | Vol | Max Drawdown | Retorno |
 |---|---|---|---|---|
-| **Rotacao v2 (freio)** | **1,56** | 22% | **-24%** | +2.401% |
+| **Rotacao v2 (freio)** | **1,56** | 22% | **-24%** | +2.411% |
 | v2 sem freio | 1,09 | 50% | -79% | +6.207% |
-| Dual Momentum mensal (livro, no comparativo) | 1,03 | 50% | -79% | +4.727% |
+| Dual Momentum mensal (livro, no comparativo) | 1,03 | 50% | -79% | +4.731% |
 | Buy & Hold 1/3 | 1,17 | 27% | -52% | +1.539% |
 
 ![Comparativo](figures/comparativo.png)
@@ -36,8 +36,8 @@ O `dual_momentum.py` e **o** Dual Momentum deste repo: nucleo do livro INTACTO (
 
 | Versao | Sharpe | MaxDD (regua) | Retorno | Custo/ano | Trocas de lider |
 |---|---|---|---|---|---|
-| **Dual Momentum** (`dual_momentum.py`, barras 60min) | **1,12** | -64% (horaria) | **+4.631%** | **3,6%** | **20 em 9 anos** |
-| Dual Momentum mensal (`dual_momentum_mensal.py`, baseline) | 1,04 | -65% (mensal; -79% diaria) | +3.853% | baixo (18 trocas × 20 bps) | 18 em 9 anos |
+| **Dual Momentum** (`dual_momentum.py`, barras 60min) | **1,13** | -64% (horaria) | **+4.931%** | **3,6%** | **20 em 9 anos** |
+| Dual Momentum mensal (`dual_momentum_mensal.py`, baseline) | 1,04 | -65% (mensal; -79% diaria) | +3.858% | baixo (18 trocas × 20 bps) | 18 em 9 anos |
 
 ![DM vs benchmark](figures/dm_vs_benchmark.png)
 
@@ -49,6 +49,7 @@ Narrativa linha a linha (em portugues) dos scripts apresentados:
 
 - [Rotacao v2](docs/pseudocodigo/rotacao_v2.md) · [Dual Momentum](docs/pseudocodigo/dual_momentum.md)
 - Indice: [docs/pseudocodigo/](docs/pseudocodigo/)
+- Auditoria de numeros/fontes: [docs/INTEGRIDADE.md](docs/INTEGRIDADE.md)
 
 ## Como rodar
 

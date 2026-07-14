@@ -17,26 +17,24 @@ _SRC = Path(__file__).resolve().parent
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from _paths import DADOS, FIGS, OUT
+from _cdi import cdi_anual_por_ano
 
 VOL_ALVO, JANELA_VOL, N = 0.20, 20, 252
 LOOKBACKS = [126, 189, 252, 315]
 ATIVOS = ["PRIO3", "ITUB3", "ABEV3"]
 CORES  = {"PRIO3": "#eb6834", "ITUB3": "#2a78d6", "ABEV3": "#1baf7a", "caixa": "#c9c9c2"}
-CDI_POR_ANO = {2008:0.1238, 2009:0.0988, 2010:0.0975, 2011:0.1160, 2012:0.0841,
-               2013:0.0806, 2014:0.1081, 2015:0.1324, 2016:0.1400, 2017:0.0993,
-               2018:0.0642, 2019:0.0596, 2020:0.0276, 2021:0.0442, 2022:0.1239,
-               2023:0.1304, 2024:0.1088, 2025:0.1350, 2026:0.1500}
+CDI_POR_ANO = cdi_anual_por_ano()
 
 precos = pd.concat({a: pd.read_csv(DADOS / f"{a}.csv", parse_dates=["date"]).set_index("date")["adjustedClose"]
-                    for a in ATIVOS}, axis=1, sort=True).loc["2008":]
-ret    = precos.pct_change()
+                    for a in ATIVOS}, axis=1, sort=True)  # historia completa (E37)
+ret    = precos.pct_change(fill_method=None)
 INICIO = (precos.dropna().index[0] + pd.Timedelta(days=370)).strftime("%Y-%m")
 
 # ---------- v2: direcao (media de 4 janelas) -> vol target no portfolio -> semanal ----------
 def lider(mom):
     b = mom.rank(axis=1).eq(mom.rank(axis=1).max(axis=1), axis=0).astype(float)
     return b.div(b.sum(axis=1), axis=0)
-direcao = sum(lider(precos.pct_change(L)) for L in LOOKBACKS) / len(LOOKBACKS)
+direcao = sum(lider(precos.pct_change(L, fill_method=None)) for L in LOOKBACKS) / len(LOOKBACKS)
 r_dir   = (direcao.shift(1) * ret).sum(axis=1)
 fator   = (VOL_ALVO / (r_dir.rolling(JANELA_VOL).std() * np.sqrt(N))).clip(0, 1)
 peso_v2 = direcao.mul(fator, axis=0).fillna(0).resample("W-FRI").last().reindex(precos.index, method="ffill").loc[INICIO:]

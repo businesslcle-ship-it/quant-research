@@ -15,12 +15,11 @@ _SRC = Path(__file__).resolve().parent
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from _paths import DADOS
+from _cdi import cdi_anual_por_ano
 
 CUSTO  = 0.0020
 ATIVOS = ['PRIO3', 'ITUB3', 'ABEV3']
-CDI_POR_ANO = {2016: 0.1400, 2017: 0.0993, 2018: 0.0642, 2019: 0.0596, 2020: 0.0276,
-               2021: 0.0442, 2022: 0.1239, 2023: 0.1304, 2024: 0.1088, 2025: 0.1350,
-               2026: 0.1500}
+CDI_POR_ANO = cdi_anual_por_ano()
 
 # %% 1) Fechamentos diarios (a linha 'dia' da base) -> precos de fim de mes
 base = pd.read_csv(DADOS / 'base_plana.csv', parse_dates=['data'])

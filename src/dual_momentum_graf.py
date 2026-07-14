@@ -15,21 +15,20 @@ _SRC = Path(__file__).resolve().parent
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from _paths import DADOS, FIGS
+from _cdi import cdi_anual_por_ano
 
 CUSTO, BUFFER, HORAS_POR_ANO = 0.0020, 0.05, 252 * 7
 ATIVOS = ['PRIO3', 'ITUB3', 'ABEV3']
-CDI_POR_ANO = {2016: 0.1400, 2017: 0.0993, 2018: 0.0642, 2019: 0.0596, 2020: 0.0276,
-               2021: 0.0442, 2022: 0.1239, 2023: 0.1304, 2024: 0.1088, 2025: 0.1350,
-               2026: 0.1500}
+CDI_POR_ANO = cdi_anual_por_ano()
 
 base = pd.read_csv(DADOS / 'base_plana.csv', parse_dates=['data'])
 
-# %% 1) DM 60min fiel — identico ao dual_momentum_60min.py
+# %% 1) Dual Momentum (barras 60min) — identico ao dual_momentum.py
 df = base[base['hora'] != 'dia'].copy()
 df['timestamp'] = pd.to_datetime(df['data'].dt.strftime('%Y-%m-%d') + ' ' + df['hora'])
 fech_h = df.sort_values('timestamp').set_index('timestamp')[[f'{a}_fechamento' for a in ATIVOS]]
 fech_h.columns = ATIVOS
-ret_h = fech_h.pct_change()
+ret_h = fech_h.pct_change(fill_method=None)
 cdi_hora = pd.Series((1 + fech_h.index.year.map(CDI_POR_ANO)) ** (1/HORAS_POR_ANO) - 1, index=fech_h.index)
 
 um_ano_atras = fech_h.index.searchsorted(fech_h.index - pd.Timedelta(days=365), side='right') - 1
@@ -96,14 +95,14 @@ eq_cdi = (1 + cdi_mes.iloc[13:]).cumprod()
 fig, (em_cima, embaixo) = plt.subplots(2, 1, figsize=(11, 7), sharex=True,
                                        gridspec_kw={'height_ratios': [3, 1]})
 em_cima.plot(eq_dm60_dia, color='#0b6e4f', lw=2,
-             label=f'DM 60min fiel (12m + histerese)  Sharpe {sh_dm60:.2f} | MaxDD {dd_dm60:.0%} (horaria) | {eq_dm60.iloc[-1]-1:+.0%}')
+             label=f'Dual Momentum (60min)  Sharpe {sh_dm60:.2f} | MaxDD {dd_dm60:.0%} (horaria) | {eq_dm60.iloc[-1]-1:+.0%}')
 em_cima.plot(eq_gem, color='#1f4e79', lw=1.6,
-             label=f'Baseline fiel mensal                  Sharpe {sh_gem:.2f} | MaxDD {dd_gem:.0%} (mensal) | {eq_gem.iloc[-1]-1:+.0%}')
+             label=f'Dual Momentum mensal   Sharpe {sh_gem:.2f} | MaxDD {dd_gem:.0%} (mensal) | {eq_gem.iloc[-1]-1:+.0%}')
 em_cima.plot(eq_bh, color='#d17a22', lw=1.4,
-             label=f'Buy & Hold 1/3                          Sharpe {sh_bh:.2f} | MaxDD {dd_bh:.0%} (mensal) | {eq_bh.iloc[-1]-1:+.0%}')
+             label=f'Buy & Hold 1/3         Sharpe {sh_bh:.2f} | MaxDD {dd_bh:.0%} (mensal) | {eq_bh.iloc[-1]-1:+.0%}')
 em_cima.plot(eq_cdi, color='gray', lw=1.2, ls='--', label=f'CDI  {eq_cdi.iloc[-1]-1:+.0%}')
 em_cima.set_yscale('log')
-em_cima.set_title('Dual Momentum fiel ao livro nas barras de 60min vs baseline mensal — liquido de 20 bps')
+em_cima.set_title('Dual Momentum (apresentado, barras 60min) vs baseline mensal — liquido de 20 bps')
 em_cima.legend(loc='upper left', fontsize=9)
 em_cima.grid(alpha=0.3)
 

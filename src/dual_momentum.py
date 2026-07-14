@@ -21,15 +21,14 @@ _SRC = Path(__file__).resolve().parent
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 from _paths import DADOS
+from _cdi import cdi_anual_por_ano
 
 # ============================ PARAMETROS ============================
 CUSTO         = 0.0020                     # 0,20% por perna (trocar de ativo = 2 pernas)
 BUFFER        = 0.05                        # so troca de lider se ganhar por +5% de momentum
 HORAS_POR_ANO = 252 * 7                     # ~1.764 barras de 60min num ano de pregao
 ATIVOS        = ['PRIO3', 'ITUB3', 'ABEV3']
-CDI_POR_ANO   = {2016: 0.1400, 2017: 0.0993, 2018: 0.0642, 2019: 0.0596, 2020: 0.0276,
-                 2021: 0.0442, 2022: 0.1239, 2023: 0.1304, 2024: 0.1088, 2025: 0.1350,
-                 2026: 0.1500}
+CDI_POR_ANO   = cdi_anual_por_ano()
 
 # ============================ 1) DADOS: as barras de 60 minutos ============================
 # Da base plana pego so as barras horarias (descarto a linha-resumo 'dia') e remonto o relogio real.
@@ -38,7 +37,7 @@ barras = base[base['hora'] != 'dia'].copy()
 barras['timestamp'] = pd.to_datetime(barras['data'].dt.strftime('%Y-%m-%d') + ' ' + barras['hora'])
 preco = (barras.sort_values('timestamp').set_index('timestamp')[[f'{a}_fechamento' for a in ATIVOS]])
 preco.columns = ATIVOS
-retorno_ativo = preco.pct_change()                                   # retorno de cada ativo, barra a barra
+retorno_ativo = preco.pct_change(fill_method=None)                                   # retorno de cada ativo, barra a barra
 cdi_barra = pd.Series((1 + preco.index.year.map(CDI_POR_ANO)) ** (1/HORAS_POR_ANO) - 1, index=preco.index)
 
 # ============================ 2) AS DUAS PERNAS, POR CALENDARIO ============================
@@ -112,4 +111,4 @@ print(f'Periodo: {retorno_estrategia.index[0]:%Y-%m} a {retorno_estrategia.index
 print(f'Sharpe {sharpe:.2f} | MaxDD {max_drawdown:.0%} (regua HORARIA, a mais dura) | retorno {retorno_total:.0%}')
 print(f'Trocas: {trocas_lider} de lider + {trocas_caixa} do caixa | custo {custo_ano:.1%}/ano | posicao hoje: {posicao_hoje}')
 print('Sharpe por bloco: ' + ' | '.join(f'{nome}: {s:.2f}' for nome, s in blocos.items()))
-print('Baseline Dual Momentum mensal (dual_momentum_mensal.py): Sharpe 1.04 | MaxDD -65% mensal | +3853%')
+print('Baseline Dual Momentum mensal (dual_momentum_mensal.py): ver print do script mensal (mesma regua 20 bps)')

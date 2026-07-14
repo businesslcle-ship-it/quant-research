@@ -17,11 +17,11 @@ LOOKBACKS = [126, 189, 252, 315]
 ATIVOS = ["PRIO3", "ITUB3", "ABEV3"]
 
 px  = pd.concat({a: pd.read_csv(DADOS / f"{a}.csv", parse_dates=["date"]).set_index("date")["adjustedClose"]
-                 for a in ATIVOS}, axis=1, sort=True).loc["2008":]
-ret = px.pct_change()
+                 for a in ATIVOS}, axis=1, sort=True)  # historia completa (E37)
+ret = px.pct_change(fill_method=None)
 
 def lider(L):
-    b = px.pct_change(L).rank(axis=1)
+    b = px.pct_change(L, fill_method=None).rank(axis=1)
     b = b.eq(b.max(axis=1), axis=0).astype(float)
     return b.div(b.sum(axis=1), axis=0)
 
@@ -29,10 +29,11 @@ direcao = sum(lider(L) for L in LOOKBACKS) / len(LOOKBACKS)
 r_dir   = (direcao.shift(1) * ret).sum(axis=1)
 fator   = (VOL_ALVO / (r_dir.rolling(JANELA_VOL).std() * np.sqrt(N))).clip(0, 1)
 peso    = direcao.mul(fator, axis=0).fillna(0).resample("W-FRI").last().reindex(px.index, method="ffill")
-mom12   = px.pct_change(252)
+mom12   = px.pct_change(252, fill_method=None)
+peso_out = peso.loc["2008":]
 
 for a in ATIVOS:
-    out = pd.DataFrame({"adjustedClose": px[a], "momentum_12m": mom12[a], "peso": peso[a]}).dropna(subset=["peso"])
+    out = pd.DataFrame({"adjustedClose": px[a], "momentum_12m": mom12[a], "peso": peso_out[a]}).dropna(subset=["peso"])
     path = OUT / f"sinais_{a}.csv"
     out.to_csv(path)
-    print(f"{path}  ({len(out)} linhas)  | peso hoje: {peso[a].iloc[-1]:.0%}")
+    print(f"{path}  ({len(out)} linhas)  | peso hoje: {peso_out[a].iloc[-1]:.0%}")
