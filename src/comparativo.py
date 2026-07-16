@@ -1,10 +1,12 @@
 """
-Comparativo — Rotacao v2 x v2 sem freio x Dual Momentum x Buy & Hold
---------------------------------------------------------------------
-Mesma janela (3 ativos + warm-up), regua diaria. Estrategias ativas liquidas
-de 20 bps/perna. Buy & Hold 1/3 sem custo de corretagem (benchmark passivo).
+Comparativo — Rotacao v2 x Dual Momentum x Buy & Hold x estrategia-propria
+--------------------------------------------------------------------------
+Mesma janela calendário, régua diária. Ativas líquidas de 20 bps/perna.
+Buy & Hold 1/3 sem corretagem.
 
-Lookbacks usam historia COMPLETA (E37); so a avaliacao comeca em INICIO.
+estrategia-propria = breadth Path B 145 (série exportada do lab E48, combo 3/6/9/12m).
+UNIVERSO DISTINTO dos 3 ativos — curva alinhada só no calendário.
+Lookbacks v2/DM usam história completa (E37); avaliação desde INICIO.
 """
 import pandas as pd
 import numpy as np
@@ -55,6 +57,15 @@ for t in wA.index[12:]:
 series["Dual Momentum (livro)"] = perf(wA.reindex(precos.index, method="ffill").fillna(0))
 series["Buy & Hold 1/3"]        = ret.mean(axis=1).dropna().loc[INICIO:]
 
+ep_path = DADOS / "estrategia_propria_diario.csv"
+assert ep_path.exists(), f"Falta {ep_path} (export lab E45 → estrategia-propria)"
+ep = pd.read_csv(ep_path, parse_dates=["dia"]).set_index("dia")["retorno_liquido"]
+series["estrategia-propria"] = ep.dropna().loc[INICIO:]
+print(
+    "AVISO: estrategia-propria = Path B 145 (lab E48, combo 3/6/9/12m). "
+    "Universo DISTINTO dos 3 ativos; não é apples-to-apples de painel."
+)
+
 print(f"{INICIO}→{precos.index[-1]:%Y-%m} | ativas @20bps; B&H sem corretagem")
 print(f"{'estrategia':24}{'CAGR':>7}{'vol':>6}{'Sharpe':>8}{'MaxDD':>7}{'ret':>11}")
 curvas = {}
@@ -66,11 +77,15 @@ for nome, r in series.items():
           f"{r.mean()/r.std()*np.sqrt(N):>8.2f}{(eq/eq.cummax()-1).min():>7.0%}{eq.iloc[-1]-1:>11.0%}")
 
 CORES = {"Rotacao v2 (freio)": "#2a78d6", "v2 sem freio": "#1baf7a",
-         "Dual Momentum (livro)": "#eda100", "Buy & Hold 1/3": "#8a8a85"}
+         "Dual Momentum (livro)": "#eda100", "Buy & Hold 1/3": "#8a8a85",
+         "estrategia-propria": "#c0392b"}
 fig, (ax_eq, ax_dd) = plt.subplots(2, 1, figsize=(13, 9), sharex=True,
                                    height_ratios=[2, 1], facecolor="#fcfcfb")
-fig.suptitle("Rotacao v2 (freio) x Dual Momentum x Buy & Hold — mesma janela (ativas @20 bps)",
-             fontsize=13, weight="bold")
+fig.suptitle(
+    "Comparativo — mesma janela calendário @20 bps\n"
+    "(estrategia-propria = Path B 145; demais = 3 ativos)",
+    fontsize=12, weight="bold",
+)
 for nome, eq in curvas.items():
     estilo = "--" if nome == "Buy & Hold 1/3" else "-"
     ax_eq.plot(eq.index, eq.values, estilo, color=CORES[nome], lw=2, label=nome)

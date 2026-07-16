@@ -1,6 +1,6 @@
 # Quant Research
 
-Rotacao Momentum v2 — estrategia sistematica de momentum cross-sectional com **volatility targeting** e rebalance semanal, aplicada a ITUB3, PRIO3 e ABEV3. A cada dia o sistema mede o momentum dos tres ativos em quatro janelas (6, 9, 12 e 15 meses), aloca no mais forte, **dimensiona a posicao pela volatilidade do portfolio** (mira 20% ao ano) e congela os pesos por uma semana. O capital nao investido rende 100% do CDI. Long-only, sem alavancagem, liquido de **20 bps por perna**, sem look-ahead (`shift(1)`).
+Rotacao Momentum v2 — estrategia sistematica de momentum cross-sectional com **volatility targeting** e rebalance semanal, aplicada a ITUB3, PRIO3 e ABEV3. A cada dia o sistema mede o momentum dos tres ativos em quatro janelas (6, 9, 12 e 15 meses), aloca no mais forte, **dimensiona a posicao pela volatilidade do portfolio** (mira 20% ao ano) e congela os pesos por uma semana. O capital nao investido rende 100% do CDI. Long-only, sem alavancagem, liquido de **20 bps por ordem**, sem look-ahead (`shift(1)`).
 
 A logica tem tres camadas independentes: **direcao** (em quem — a media dos lideres das quatro janelas), **tamanho** (quanto — o vol target, uma vez, no nivel do portfolio) e **ritmo** (quando — rebalance semanal).
 
@@ -9,18 +9,21 @@ A logica tem tres camadas independentes: **direcao** (em quem — a media dos li
 **Lab / `rotacao.py` (amostra desde 2008, warm-up honesto — E37):** Sharpe **1,18** | MaxDD **−28%** | retorno +6.740%.  
 (Antes do E37 o código cortava a história em 2008 e reportava 1,30/−25% com 2008 inteiro em CDI por artefato. PRIO só entra em meados de 2015; ITUB em 2009. CDI do caixa: série diária BCB.)
 
-**Comparativo head-to-head (janela dos 3 ativos, ~2016-06+, `comparativo.py`):**
+**Comparativo (janela calendário ~2016-06+, `comparativo.py`, ativas @20 bps):**
 
-| Estrategia | Sharpe | Vol | Max Drawdown | Retorno |
-|---|---|---|---|---|
-| **Rotacao v2 (freio)** | **1,56** | 22% | **-24%** | +2.411% |
-| v2 sem freio | 1,09 | 50% | -79% | +6.207% |
-| Dual Momentum mensal (livro, no comparativo) | 1,03 | 50% | -79% | +4.731% |
-| Buy & Hold 1/3 | 1,17 | 27% | -52% | +1.539% |
+| Estrategia | Universo | Sharpe | Vol | Max Drawdown | Retorno |
+|---|---|---|---|---|---|
+| **Rotacao v2 (freio)** | 3 ativos | **1,56** | 22% | **-24%** | +2.411% |
+| v2 sem freio | 3 ativos | 1,09 | 50% | -79% | +6.207% |
+| Dual Momentum mensal (livro, no comparativo) | 3 ativos | 1,03 | 50% | -79% | +4.731% |
+| Buy & Hold 1/3 | 3 ativos | 1,17 | 27% | -52% | +1.539% |
+| **estratégia-própria** | Path B 145 | **1,31** | 22% | **-45%** | +873% |
 
 ![Comparativo](figures/comparativo.png)
 
-**Leitura:** o vol target ("o freio") e o que separa a v2 do resto. Sem ele, a rotacao converge para o Dual Momentum classico (mesma vol de 50%, mesmo drawdown de -79%) — ou seja, o diferencial da v2 nao esta no sinal de direcao, e sim no **controle de risco**. **Nao confundir** o 1,56 (janela 2016+) com o 1,18 (amostra 2008+ apos E37).
+**estratégia-própria** (nome oficial): breadth Path B — +100% Top20 / −30% Bottom10 / +30% CDI; sinal = **média dos percentis** de momentum em **3/6/9/12 meses** (lab E48; substitui o single-365d E45). Série em `dados/estrategia_propria_diario.csv`. **Universo distinto** dos 3 ativos: o gráfico alinha o calendário; **não** é apples-to-apples de painel. Pseudocódigo: [docs/pseudocodigo/estrategia_propria.md](docs/pseudocodigo/estrategia_propria.md).
+
+**Leitura (linha 3 ativos):** o vol target ("o freio") e o que separa a v2 do resto. Sem ele, a rotacao converge para o Dual Momentum classico (mesma vol de 50%, mesmo drawdown de -79%) — ou seja, o diferencial da v2 nao esta no sinal de direcao, e sim no **controle de risco**. **Nao confundir** o 1,56 (janela 2016+) com o 1,18 (amostra 2008+ apos E37).
 
 ![Rotacao v2](figures/rotacao.png)
 
@@ -34,10 +37,14 @@ As alocacoes da Rotacao v2 (pesos fracionarios + caixa) e do Dual Momentum basel
 
 O `dual_momentum.py` e **o** Dual Momentum deste repo: nucleo do livro INTACTO (momentum de **12 meses por calendario** + barreira do CDI dos mesmos 12 meses), avaliado a cada **barra de 60min**, com UMA concessao — **histerese de 5%** na troca de lider. Nao ha outro "Dual Momentum" apresentado; o arquivo mensal e so baseline de comparacao.
 
-| Versao | Sharpe | MaxDD (regua) | Retorno | Custo/ano | Trocas de lider |
+| Versao | Sharpe | MaxDD (regua) | Retorno | Custo/ano | Sinais / execucao |
 |---|---|---|---|---|---|
-| **Dual Momentum** (`dual_momentum.py`, barras 60min) | **1,13** | -64% (horaria) | **+4.931%** | **3,6%** | **20 em 9 anos** |
-| Dual Momentum mensal (`dual_momentum_mensal.py`, baseline) | 1,04 | -65% (mensal; -79% diaria) | +3.858% | baixo (18 trocas × 20 bps) | 18 em 9 anos |
+| **Dual Momentum** (`dual_momentum.py`, barras 60min) | **1,13** | -64% (horaria) | **+4.931%** | **3,6%** | **147 rebalances em 9 anos; 167 ordens de compra/venda** |
+| Dual Momentum mensal (`dual_momentum_mensal.py`, baseline) | 1,04 | -65% (mensal; -79% diaria) | +3.858% | 6,0% total (30 ordens) | 18 **meses** com mudanca de peso em 9 anos; 30 ordens |
+
+**Nao confunda as contagens.** No Dual Momentum de 60min, um **rebalance** e qualquer troca de alvo: caixa→ativo, ativo→caixa ou ativo→ativo. Foram 147 rebalances (64 entradas do caixa, 63 saidas para caixa e 20 trocas entre ativos). Uma mudanca de um ativo para outro exige duas **ordens**: vender o ativo anterior e comprar o novo. Por isso os 147 rebalances exigiram 167 ordens de compra/venda, a 20 bps por ordem.
+
+Os **18** do baseline mensal nao sao “18 sinais” do Dual Momentum de 60min: sao 18 meses em que o peso mensal mudou. Essa trilha mensal exigiu 30 ordens equivalentes. Barras de 60min sao o relogio de decisao; o sinal continua usando momentum e barreira CDI de 12 meses por calendario.
 
 ![DM vs benchmark](figures/dm_vs_benchmark.png)
 
@@ -47,7 +54,7 @@ O `dual_momentum.py` e **o** Dual Momentum deste repo: nucleo do livro INTACTO (
 
 Narrativa linha a linha (em portugues) dos scripts apresentados:
 
-- [Rotacao v2](docs/pseudocodigo/rotacao_v2.md) · [Dual Momentum](docs/pseudocodigo/dual_momentum.md)
+- [Rotacao v2](docs/pseudocodigo/rotacao_v2.md) · [Dual Momentum](docs/pseudocodigo/dual_momentum.md) · [estratégia-própria](docs/pseudocodigo/estrategia_propria.md)
 - Indice: [docs/pseudocodigo/](docs/pseudocodigo/)
 
 ## Como rodar
