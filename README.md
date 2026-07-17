@@ -1,5 +1,8 @@
 # Quant Research
 
+> **Path B / estratégia-própria atualizada:** abra [`ESTRATEGIA_PROPRIA.md`](ESTRATEGIA_PROPRIA.md)  
+> (se você só olhar `src/`, verá o código dos **3 ativos** — a evidência Path B está em `docs/` + `dados/` + `src/estrategia_propria_amostra.py`).
+
 Rotacao Momentum v2 — estrategia sistematica de momentum cross-sectional com **volatility targeting** e rebalance semanal, aplicada a ITUB3, PRIO3 e ABEV3. A cada dia o sistema mede o momentum dos tres ativos em quatro janelas (6, 9, 12 e 15 meses), aloca no mais forte, **dimensiona a posicao pela volatilidade do portfolio** (mira 20% ao ano) e congela os pesos por uma semana. O capital nao investido rende 100% do CDI. Long-only, sem alavancagem, liquido de **20 bps por ordem**, sem look-ahead (`shift(1)`).
 
 A logica tem tres camadas independentes: **direcao** (em quem — a media dos lideres das quatro janelas), **tamanho** (quanto — o vol target, uma vez, no nivel do portfolio) e **ritmo** (quando — rebalance semanal).
@@ -92,7 +95,8 @@ pip install -r requirements.txt
 python3 rotacao.py
 python3 dual_momentum.py
 python3 dual_momentum_mensal.py
-python3 comparativo.py             # inclui curva E54 (Path B)
+python3 comparativo.py
+python3 estrategia_propria_amostra.py   # imprime E54 + tabela filme + schema E55
 python3 rotacao_graf.py
 python3 src/sinais_comparados.py
 ```
@@ -102,6 +106,7 @@ Requer a pasta `dados/` (CSVs dos 3 ativos + `base_plana.csv` + serie propria + 
 ## Estrutura
 
 ```
+├── ESTRATEGIA_PROPRIA.md              # ← COMECE AQUI (Path B / E54)
 ├── README.md
 ├── docs/
 │   ├── LINHA_RACIOCINIO.md
@@ -112,7 +117,10 @@ Requer a pasta `dados/` (CSVs dos 3 ativos + `base_plana.csv` + serie propria + 
 │   ├── comparativo_horizontes_filme.csv
 │   ├── e55_schema_resumo.csv
 │   └── e55_schema_particoes.csv
-├── src/ …
+├── src/
+│   ├── estrategia_propria_amostra.py      # imprime evidência Path B
+│   ├── rotacao.py / dual_momentum.py …  # linha 3 ativos
+│   └── comparativo.py
 └── figures/
 ```
 
